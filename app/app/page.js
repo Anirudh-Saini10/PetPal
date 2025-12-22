@@ -1,0 +1,71 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
+
+export default function AppPage() {
+  const router = useRouter();
+  const [checking, setChecking] = useState(true);
+  const [sessionPresent, setSessionPresent] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkSession() {
+      const { data, error } = await supabase.auth.getSession();
+
+      if (!isMounted) return;
+
+      if (error || !data.session) {
+        router.replace("/login");
+        return;
+      }
+
+      setSessionPresent(true);
+      setChecking(false);
+    }
+
+    checkSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      if (!isMounted) return;
+
+      if (!currentSession) {
+        router.replace("/login");
+      } else {
+        setSessionPresent(true);
+        setChecking(false);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router]);
+
+  if (checking && !sessionPresent) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-12">
+        <p className="text-sm text-gray-600">Checking your session...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-12">
+      <h1 className="mb-2 text-2xl font-semibold text-gray-900">
+        App placeholder
+      </h1>
+      <p className="text-sm text-gray-600">
+        You are logged in. This is a protected route at <code>/app</code> that
+        only authenticated users can access.
+      </p>
+    </div>
+  );
+}
+
+
