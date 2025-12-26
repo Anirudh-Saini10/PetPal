@@ -100,6 +100,16 @@ export default function AppPage() {
         </button>
       </div>
 
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => router.push("/app/add-pet")}
+          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Add Pet
+        </button>
+      </div>
+
       {loadingPets ? (
         <p className="text-sm text-gray-600">Loading pets...</p>
       ) : pets.length === 0 ? (
