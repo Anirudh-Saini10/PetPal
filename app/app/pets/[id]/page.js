@@ -12,6 +12,7 @@ export default function PetProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pet, setPet] = useState(null);
+  const [healthEvents, setHealthEvents] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -46,6 +47,27 @@ export default function PetProfilePage() {
 
       setPet(data);
       setLoading(false);
+
+      // Fetch health events for this pet
+      await loadHealthEvents(petId, userId);
+    }
+
+    async function loadHealthEvents(petId, userId) {
+      const { data, error: eventsError } = await supabase
+        .from("health_events")
+        .select("type, description, event_date")
+        .eq("pet_id", petId)
+        .eq("user_id", userId)
+        .order("event_date", { ascending: false });
+
+      if (!isMounted) return;
+
+      if (eventsError) {
+        console.error("Error fetching health events:", eventsError);
+        setHealthEvents([]);
+      } else {
+        setHealthEvents(data || []);
+      }
     }
 
     if (petId) {
@@ -120,6 +142,31 @@ export default function PetProfilePage() {
         <p>
           <span className="font-medium">Mood:</span> Happy
         </p>
+      </div>
+
+      <div className="mt-6 space-y-2 text-sm text-gray-800">
+        <h2 className="text-lg font-semibold text-gray-900">Health Timeline</h2>
+        {healthEvents.length === 0 ? (
+          <p className="text-gray-600">No health events yet</p>
+        ) : (
+          <ul className="space-y-3">
+            {healthEvents.map((event, index) => (
+              <li key={index} className="border-b border-gray-200 pb-2">
+                <p>
+                  <span className="font-medium">Type:</span> {event.type}
+                </p>
+                {event.description ? (
+                  <p>
+                    <span className="font-medium">Description:</span> {event.description}
+                  </p>
+                ) : null}
+                <p>
+                  <span className="font-medium">Event date:</span> {event.event_date}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
