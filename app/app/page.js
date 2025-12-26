@@ -9,6 +9,8 @@ export default function AppPage() {
   const [checking, setChecking] = useState(true);
   const [sessionPresent, setSessionPresent] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [pets, setPets] = useState([]);
+  const [loadingPets, setLoadingPets] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -25,6 +27,27 @@ export default function AppPage() {
 
       setSessionPresent(true);
       setChecking(false);
+
+      // Fetch pets for the logged-in user
+      await fetchPets(data.session.user.id);
+    }
+
+    async function fetchPets(userId) {
+      setLoadingPets(true);
+      const { data, error } = await supabase
+        .from("pets")
+        .select("name, species")
+        .eq("user_id", userId);
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error("Error fetching pets:", error);
+        setPets([]);
+      } else {
+        setPets(data || []);
+      }
+      setLoadingPets(false);
     }
 
     checkSession();
@@ -39,6 +62,7 @@ export default function AppPage() {
       } else {
         setSessionPresent(true);
         setChecking(false);
+        fetchPets(currentSession.user.id);
       }
     });
 
@@ -64,16 +88,8 @@ export default function AppPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="mb-2 text-2xl font-semibold text-gray-900">
-            App placeholder
-          </h1>
-          <p className="text-sm text-gray-600">
-            You are logged in. This is a protected route at <code>/app</code>{" "}
-            that only authenticated users can access.
-          </p>
-        </div>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-gray-900">My Pets</h1>
         <button
           type="button"
           onClick={handleLogout}
@@ -83,6 +99,20 @@ export default function AppPage() {
           {signingOut ? "Logging out..." : "Logout"}
         </button>
       </div>
+
+      {loadingPets ? (
+        <p className="text-sm text-gray-600">Loading pets...</p>
+      ) : pets.length === 0 ? (
+        <p className="text-sm text-gray-600">No pets yet</p>
+      ) : (
+        <ul className="space-y-2">
+          {pets.map((pet, index) => (
+            <li key={index} className="text-sm text-gray-900">
+              {pet.name} - {pet.species}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
