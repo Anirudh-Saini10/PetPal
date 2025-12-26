@@ -146,6 +146,13 @@ export default function PetProfilePage() {
 
       <div className="mt-6 space-y-2 text-sm text-gray-800">
         <h2 className="text-lg font-semibold text-gray-900">Health Timeline</h2>
+        <button
+          type="button"
+          onClick={() => router.push(`/app/pets/${pet.id}/add-event`)}
+          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Add Health Event
+        </button>
         {healthEvents.length === 0 ? (
           <p className="text-gray-600">No health events yet</p>
         ) : (
