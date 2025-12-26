@@ -78,6 +78,20 @@ export default function PetProfilePage() {
     );
   }
 
+  function calculateAge(birthDate) {
+    if (!birthDate) return null;
+    const birth = new Date(birthDate);
+    const today = new Date();
+    const years = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      return years - 1;
+    }
+    return years;
+  }
+
+  const age = calculateAge(pet.birth_date);
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
       <h1 className="mb-4 text-2xl font-semibold text-gray-900">{pet.name}</h1>
@@ -95,6 +109,17 @@ export default function PetProfilePage() {
             <span className="font-medium">Birth date:</span> {pet.birth_date}
           </p>
         ) : null}
+      </div>
+
+      <div className="mt-6 space-y-2 text-sm text-gray-800">
+        <h2 className="text-lg font-semibold text-gray-900">Pet Twin</h2>
+        <p>
+          <span className="font-medium">Age:</span>{" "}
+          {age !== null ? `${age} years` : "Unknown age"}
+        </p>
+        <p>
+          <span className="font-medium">Mood:</span> Happy
+        </p>
       </div>
     </div>
   );
