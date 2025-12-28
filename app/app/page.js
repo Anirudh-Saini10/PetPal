@@ -126,5 +126,3 @@ export default function AppPage() {
     </div>
   );
 }
-
-
