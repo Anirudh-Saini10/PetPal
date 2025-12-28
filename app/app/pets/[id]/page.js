@@ -14,6 +14,7 @@ export default function PetProfilePage() {
   const [pet, setPet] = useState(null);
   const [healthEvents, setHealthEvents] = useState([]);
   const [reminders, setReminders] = useState([]);
+  const [updatingReminder, setUpdatingReminder] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -76,7 +77,7 @@ export default function PetProfilePage() {
     async function loadReminders(petId, userId) {
       const { data, error: remindersError } = await supabase
         .from("reminders")
-        .select("title, remind_at, completed")
+        .select("id, title, remind_at, completed")
         .eq("pet_id", petId)
         .eq("user_id", userId);
 
@@ -143,6 +144,42 @@ export default function PetProfilePage() {
     (r) => !r.completed && new Date(r.remind_at) < now
   );
   const completed = reminders.filter((r) => r.completed);
+
+  async function markReminderAsDone(reminderId) {
+    setUpdatingReminder(reminderId);
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session) {
+      router.replace("/login");
+      return;
+    }
+
+    const userId = sessionData.session.user.id;
+
+    const { error } = await supabase
+      .from("reminders")
+      .update({ completed: true })
+      .eq("id", reminderId)
+      .eq("pet_id", petId)
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("Error updating reminder:", error);
+    } else {
+      // Refresh reminders
+      const { data, error: remindersError } = await supabase
+        .from("reminders")
+        .select("id, title, remind_at, completed")
+        .eq("pet_id", petId)
+        .eq("user_id", userId);
+
+      if (!remindersError) {
+        setReminders(data || []);
+      }
+    }
+
+    setUpdatingReminder(null);
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
@@ -217,13 +254,23 @@ export default function PetProfilePage() {
                 <h3 className="font-medium text-gray-900">Upcoming</h3>
                 <ul className="mt-2 space-y-2">
                   {upcoming.map((reminder, index) => (
-                    <li key={index}>
-                      <p>
-                        <span className="font-medium">{reminder.title}</span>
-                      </p>
-                      <p className="text-gray-600">
-                        Due: {reminder.remind_at}
-                      </p>
+                    <li key={index} className="flex items-start justify-between">
+                      <div>
+                        <p>
+                          <span className="font-medium">{reminder.title}</span>
+                        </p>
+                        <p className="text-gray-600">
+                          Due: {reminder.remind_at}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => markReminderAsDone(reminder.id)}
+                        disabled={updatingReminder === reminder.id}
+                        className="ml-4 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        {updatingReminder === reminder.id ? "Updating..." : "Mark as done"}
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -234,13 +281,23 @@ export default function PetProfilePage() {
                 <h3 className="font-medium text-gray-900">Overdue</h3>
                 <ul className="mt-2 space-y-2">
                   {overdue.map((reminder, index) => (
-                    <li key={index}>
-                      <p>
-                        <span className="font-medium">{reminder.title}</span>
-                      </p>
-                      <p className="text-gray-600">
-                        Due: {reminder.remind_at}
-                      </p>
+                    <li key={index} className="flex items-start justify-between">
+                      <div>
+                        <p>
+                          <span className="font-medium">{reminder.title}</span>
+                        </p>
+                        <p className="text-gray-600">
+                          Due: {reminder.remind_at}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => markReminderAsDone(reminder.id)}
+                        disabled={updatingReminder === reminder.id}
+                        className="ml-4 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        {updatingReminder === reminder.id ? "Updating..." : "Mark as done"}
+                      </button>
                     </li>
                   ))}
                 </ul>
