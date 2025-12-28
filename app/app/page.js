@@ -13,6 +13,23 @@ export default function AppPage() {
   const [loadingPets, setLoadingPets] = useState(false);
 
   useEffect(() => {
+    fetch("/api/pet-twin/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pet_id: "c44f08eb-1d8e-4f6d-bfe9-1b0b95aea72e"
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("PET TWIN RESULT:", data);
+      })
+      .catch(err => {
+        console.error("PET TWIN ERROR:", err);
+      });
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
 
     async function checkSession() {
