@@ -13,28 +13,41 @@ export default function AppPage() {
   const [loadingPets, setLoadingPets] = useState(false);
 
   useEffect(() => {
-    fetch("/api/pet-twin/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        pet_id: "c44f08eb-1d8e-4f6d-bfe9-1b0b95aea72e"
+    async function callPetTwin() {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.error("PET TWIN ERROR: No session found");
+        return;
+      }
+
+      fetch("/api/pet-twin/run", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          pet_id: "c44f08eb-1d8e-4f6d-bfe9-1b0b95aea72e"
+        })
       })
-    })
-      .then(res => {
-        if (!res.ok) {
-          return res.json().then(err => {
-            throw new Error(err.error || "Request failed");
-          });
-        }
-        return res.json();
-      })
-      .then(data => {
-        console.log("PET TWIN RESULT:", data);
-      })
-      .catch(err => {
-        console.error("PET TWIN ERROR:", err.message || err);
-      });
+        .then(res => {
+          if (!res.ok) {
+            return res.json().then(err => {
+              throw new Error(err.error || "Request failed");
+            });
+          }
+          return res.json();
+        })
+        .then(data => {
+          console.log("PET TWIN RESULT:", data);
+        })
+        .catch(err => {
+          console.error("PET TWIN ERROR:", err.message || err);
+        });
+    }
+
+    callPetTwin();
   }, []);
 
   useEffect(() => {
