@@ -13,6 +13,7 @@ export default function PetProfilePage() {
   const [error, setError] = useState("");
   const [pet, setPet] = useState(null);
   const [healthEvents, setHealthEvents] = useState([]);
+  const [reminders, setReminders] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -50,6 +51,8 @@ export default function PetProfilePage() {
 
       // Fetch health events for this pet
       await loadHealthEvents(petId, userId);
+      // Fetch reminders for this pet
+      await loadReminders(petId, userId);
     }
 
     async function loadHealthEvents(petId, userId) {
@@ -67,6 +70,23 @@ export default function PetProfilePage() {
         setHealthEvents([]);
       } else {
         setHealthEvents(data || []);
+      }
+    }
+
+    async function loadReminders(petId, userId) {
+      const { data, error: remindersError } = await supabase
+        .from("reminders")
+        .select("title, remind_at, completed")
+        .eq("pet_id", petId)
+        .eq("user_id", userId);
+
+      if (!isMounted) return;
+
+      if (remindersError) {
+        console.error("Error fetching reminders:", remindersError);
+        setReminders([]);
+      } else {
+        setReminders(data || []);
       }
     }
 
@@ -113,6 +133,16 @@ export default function PetProfilePage() {
   }
 
   const age = calculateAge(pet.birth_date);
+
+  // Classify reminders
+  const now = new Date();
+  const upcoming = reminders.filter(
+    (r) => !r.completed && new Date(r.remind_at) >= now
+  );
+  const overdue = reminders.filter(
+    (r) => !r.completed && new Date(r.remind_at) < now
+  );
+  const completed = reminders.filter((r) => r.completed);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
@@ -173,6 +203,67 @@ export default function PetProfilePage() {
               </li>
             ))}
           </ul>
+        )}
+      </div>
+
+      <div className="mt-6 space-y-2 text-sm text-gray-800">
+        <h2 className="text-lg font-semibold text-gray-900">Reminders</h2>
+        {reminders.length === 0 ? (
+          <p className="text-gray-600">No reminders yet</p>
+        ) : (
+          <div className="space-y-4">
+            {upcoming.length > 0 && (
+              <div>
+                <h3 className="font-medium text-gray-900">Upcoming</h3>
+                <ul className="mt-2 space-y-2">
+                  {upcoming.map((reminder, index) => (
+                    <li key={index}>
+                      <p>
+                        <span className="font-medium">{reminder.title}</span>
+                      </p>
+                      <p className="text-gray-600">
+                        Due: {reminder.remind_at}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {overdue.length > 0 && (
+              <div>
+                <h3 className="font-medium text-gray-900">Overdue</h3>
+                <ul className="mt-2 space-y-2">
+                  {overdue.map((reminder, index) => (
+                    <li key={index}>
+                      <p>
+                        <span className="font-medium">{reminder.title}</span>
+                      </p>
+                      <p className="text-gray-600">
+                        Due: {reminder.remind_at}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {completed.length > 0 && (
+              <div>
+                <h3 className="font-medium text-gray-900">Completed</h3>
+                <ul className="mt-2 space-y-2">
+                  {completed.map((reminder, index) => (
+                    <li key={index}>
+                      <p>
+                        <span className="font-medium">{reminder.title}</span>
+                      </p>
+                      <p className="text-gray-600">
+                        Due: {reminder.remind_at}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
